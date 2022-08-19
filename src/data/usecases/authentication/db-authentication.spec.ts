@@ -1,4 +1,5 @@
 import { AuthenticationModel } from '../../../domain/usecases/authentication'
+import { HashComparer } from '../../protocols/cryptography/hash-comparer'
 import { LoadAccountByEmailRepository } from '../../protocols/db'
 import { AccountModel } from '../add-account/db-add-accounts-protocols'
 import { DbAuthentication } from './db-authentication'
@@ -6,13 +7,14 @@ import { DbAuthentication } from './db-authentication'
 interface SutTypes {
   sut: DbAuthentication
   loadAccountByEmailRepositoryStub: LoadAccountByEmailRepository
+  hashComparerStub: HashComparer
 }
 
 const makeFakeAccount = (): AccountModel => ({
   id: 'any_id',
   name: 'any_name',
   email: 'any_email@mail.com',
-  password: 'any_password'
+  password: 'hashed_password'
 })
 
 const makeFakeAuthentication = (): AuthenticationModel => ({
@@ -20,7 +22,17 @@ const makeFakeAuthentication = (): AuthenticationModel => ({
   password: 'any_password'
 })
 
-const makeLoadAccountByEmailRepositoryStub = (): LoadAccountByEmailRepository => {
+const makeHashComparer = (): HashComparer => {
+  class HashComparerStub implements HashComparer {
+    async compare (value: string, hash: string): Promise<boolean> {
+      return await new Promise(resolve => resolve(true))
+    }
+  }
+
+  return new HashComparerStub()
+}
+
+const makeLoadAccountByEmailRepository = (): LoadAccountByEmailRepository => {
   class LoadAccountByEmailRepositoryStub implements LoadAccountByEmailRepository {
     async load (_email: string): Promise<AccountModel> {
       const account = makeFakeAccount()
@@ -32,10 +44,13 @@ const makeLoadAccountByEmailRepositoryStub = (): LoadAccountByEmailRepository =>
 }
 
 const makeSut = (): SutTypes => {
-  const loadAccountByEmailRepositoryStub = makeLoadAccountByEmailRepositoryStub()
-  const sut = new DbAuthentication(loadAccountByEmailRepositoryStub)
+  const loadAccountByEmailRepositoryStub = makeLoadAccountByEmailRepository()
+  const hashComparerStub = makeHashComparer()
+  const sut = new DbAuthentication(loadAccountByEmailRepositoryStub, hashComparerStub)
+
   return {
     loadAccountByEmailRepositoryStub,
+    hashComparerStub,
     sut
   }
 }
@@ -60,5 +75,12 @@ describe('DbAuthentication UseCase', () => {
     jest.spyOn(loadAccountByEmailRepositoryStub, 'load').mockReturnValueOnce(null)
     const accessToken = await sut.auth(makeFakeAuthentication())
     expect(accessToken).toBeNull()
+  })
+
+  test('Should call HashComparer with correct values', async () => {
+    const { sut, hashComparerStub } = makeSut()
+    const comparerSpy = jest.spyOn(hashComparerStub, 'compare')
+    await sut.auth(makeFakeAuthentication())
+    expect(comparerSpy).toHaveBeenCalledWith('any_password', 'hashed_password')
   })
 })
