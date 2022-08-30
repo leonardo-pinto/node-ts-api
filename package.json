@@ -52,5 +52,8 @@
   },
   "setupFiles": [
     "./node_modules/react-native-gesture-handler/jestSetup.js"
-  ]
+  ],
+  "engines": {
+    "node": "12.x"
+  }
 }
