@@ -1,7 +1,8 @@
 version: '3'
 services:
   mongo:
-    image: mongo:4.2.22
+    container_name: mongo-container
+    image: mongo:3
     restart: always
     volumes:
       - ./data:/data/db
