@@ -17,7 +17,7 @@ const makeDecrypter = (): Decrypter => {
 }
 
 const makeSut = (): SutTypes => {
-  const decrypterStub = makeDecrypterStub()
+  const decrypterStub = makeDecrypter()
   const sut = new DbLoadAccountByToken(decrypterStub)
 
   return {
