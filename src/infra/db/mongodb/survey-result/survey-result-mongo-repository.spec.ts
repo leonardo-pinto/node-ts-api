@@ -45,7 +45,7 @@ describe('Survey Mongo Repository', () => {
   beforeEach(async () => {
     surveyCollection = await MongoHelper.getCollection('surveys')
     await surveyCollection.deleteMany({})
-    surveyResultCollection = await MongoHelper.getCollection('surveysResults')
+    surveyResultCollection = await MongoHelper.getCollection('surveyResults')
     await surveyResultCollection.deleteMany({})
     accountCollection = await MongoHelper.getCollection('accounts')
     await accountCollection.deleteMany({})
@@ -62,9 +62,30 @@ describe('Survey Mongo Repository', () => {
         answer: 'any_answer',
         date: new Date()
       })
-      console.log('surveyResult', surveyResult)
       expect(surveyResult).toBeTruthy()
       expect(surveyResult.id).toBeTruthy()
+      expect(surveyResult.answer).toBe('any_answer')
+    })
+
+    test('Should update a survey result if its not new', async () => {
+      const survey = await makeSurvey()
+      const account = await makeAccount()
+      const res = await surveyResultCollection.insertOne({
+        surveyId: survey.insertedId,
+        accountId: account.insertedId,
+        answer: 'any_answer',
+        date: new Date()
+      })
+      const sut = makeSut()
+      const surveyResult = await sut.save({
+        surveyId: survey.insertedId,
+        accountId: account.insertedId,
+        answer: 'any_answer',
+        date: new Date()
+      })
+
+      expect(surveyResult).toBeTruthy()
+      expect(surveyResult.id).toEqual(res.insertedId.toString())
       expect(surveyResult.answer).toBe('any_answer')
     })
   })
