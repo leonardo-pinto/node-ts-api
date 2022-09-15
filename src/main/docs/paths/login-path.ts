@@ -21,6 +21,15 @@ export const loginPath = {
             }
           }
         }
+      },
+      400: {
+        $ref: '#/schemas/badRequest'
+      },
+      401: {
+        $ref: '#/schemas/unauthorized'
+      },
+      500: {
+        $ref: '#/schemas/serverError'
       }
     }
   }
